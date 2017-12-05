@@ -17,8 +17,7 @@
 
 		function __construct()
 		{
-			require __DIR__ . "/config.php";
-			$this->sleep = $config['vk_api_sleep_ms'];
+			$this->sleep = 1000;
 			$this->spam_num = 0;
 		}
 		
@@ -86,9 +85,9 @@
 			echo "test";
 		}
 		
-		public function messages_get($count)
+		public function messages_get( $time )
 		{
-			return $this->request("messages.get", array('count' => $count));
+			return $this->request("messages.get", array( /*'count' => $count,*/ 'time_offset' => $time ));
 		}
 		
 		public function messages_markAsRead($message_ids)
@@ -300,12 +299,17 @@
 		
 		protected function curl($url)
 		{
+			//echo $url;
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_URL, $url);
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 10);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 			curl_setopt($ch, CURLOPT_HEADER, 0);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+			curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
 			$resp = curl_exec($ch);
+			if( curl_errno( $ch ) )
+				echo "Ошибка курлыка!";
 			curl_close($ch);
 			return $resp;
 		}
