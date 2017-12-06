@@ -40,30 +40,33 @@
 		private function getHooks(){
 			//Хуки для каждого сообщения
 			$hooks = scandir( PATH_TO_HOOKS."onMessage" );
-			foreach( $hooks as $h ){
-				if( $h == "." || $h == ".." ) continue;
-				require_once PATH_TO_HOOKS."onMessage/".$h;
-				$name = substr( $h, 0, -4 );
-				$class = new $name;
-				array_push( $this->hooks[ "onMessage" ], $class );
-			}
+			$this->connect( "onMessage" );
 			//Хуки для каждой итерации
 			$hooks = scandir( PATH_TO_HOOKS."onTimer" );
-			foreach( $hooks as $h ){
-				if( $h == "." || $h == ".." ) continue;
-				require_once PATH_TO_HOOKS."onTimer/".$h;
-				$name = substr( $h, 0, -4 );
-				$class = new $name;
-				array_push( $this->hooks[ "onTimer" ], $class );
-			}
-			//Комманды
+			$this->connect( "onTimer" );
+			//Команды
 			$hooks = scandir( PATH_TO_HOOKS."onCommand" );
 			foreach( $hooks as $h ){
 				if( $h == "." || $h == ".." ) continue;
 				require_once PATH_TO_HOOKS."onCommand/".$h;
 				$name = substr( $h, 0, -4 );
 				$class = new $name;
-				$this->hooks[ "onCommand" ][ $h ] = $class;
+				$this->hooks[ "onCommand" ][ $class->cmd ] = $class;
+			}
+			//Функции ожиданий
+			$hooks = scandir( PATH_TO_HOOKS."onWait" );
+			$this->connect( "onWait" );
+		}
+		
+		//Подключение класса
+		private function connect( $str )
+		{
+			foreach( $hooks as $h ){
+				if( $h == "." || $h == ".." ) continue;
+				require_once PATH_TO_HOOKS."$str/".$h;
+				$name = substr( $h, 0, -4 );
+				$class = new $name;
+				array_push( $this->hooks[ $str ], $class );
 			}
 		}
 		
@@ -80,8 +83,8 @@
 					if( $messages[ $i ]->read_state ) continue;
 					$this->output = "";
 					foreach( $this->hooks[ "onMessage" ] as $h ) $h->go( $this );
-					if( $this->checkCommand( $messages[ $i ]->body ) )
-						foreach( $this->hooks[ "onCommand" ] as $h ) $h->go( $this );
+					if( $this->checkCommand( $cmd = $messages[ $i ]->body ) )
+						$this->hooks[ "onCommand" ][ $cmd ]->go( $this );
 					if( $this->output ) $this->vk->message_send( $this->output );
 				}		
 				//sleep( $this->interval );
@@ -101,7 +104,7 @@
 			$cmds = array_keys( $this->hooks[ "onCommand" ] );
 			foreach( $cmds as $c )
 				if( $cmd == mb_substr( $c, 0, -4 ) )
-					return true;
+					return $cmd;
 			return false;
 		}
 		
@@ -184,6 +187,24 @@
 				array_push( $tasks, rand( $sInt, $eInt ) );
 			
 			return $tasks;				
+		}
+		
+		//Отправить задание пользователю
+		public function sendTask( $uid ){
+			$res = $this->DB->query( "SELECT themes FROM users WHERE uid = $uid" );
+			if( $row = mysqli_fetch_array( $res ) ){
+				$themes = json_decode( $row[0] );
+				foreach( $themes as $t )
+					$this->output = $this->getTaskText( $t );					
+			}
+		}
+		
+		//Получить случайный текст, соответствующий данной теме
+		public getTaskText( $theme ){
+			$res = $this->DB->query( "SELECT text FROM texts WHERE theme = $t ORDER BY RAND() LIMIT 1" );
+			if( $row = mysqli_fetch_array( $res ) )
+				return $row[ 0 ];
+			return false;			
 		}
 		
 	}
