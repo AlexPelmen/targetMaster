@@ -16,10 +16,8 @@
  
     <body>
 		<form id = "content" action = "changeToken.php" method = "post" >
-			<p class = "Infostring" >Текущий access_token: <? $token ?></p>
-			<p>Ввести новый:</p>
-			<input type = "Text" name = "token" class = "Text" />
-			<a href = "index.php" ><input type = "button" name = "back" id = "back" value = "Назад" class = "Btn" /></a>
+			<h2>Записано</h2>
+			<a href = "index.php" ><input type = "button" name = "back" id = "back" value = "Меню" class = "Btn" /></a>
 		</form>
     </body>
 </html>

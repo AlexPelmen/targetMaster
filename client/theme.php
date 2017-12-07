@@ -1,11 +1,14 @@
 <?php 
 	$themes = array();
+	$keys = array();
 	require "../database.php";
 	$DB = link_db();
 	
-	$res = $DB->query( "SELECT theme FROM themes" );
-	while( $row = mysqli_fetch_array( $res ) )
-		array_push( $themes, $row[0] );
+	$res = $DB->query( "SELECT * FROM themes" );
+	while( $row = mysqli_fetch_array( $res ) ){
+		$themes[ $row['id'] ] = $row[ 'theme' ];
+		array_push( $keys, $row['id'] );
+	}
 	
 ?>
 
@@ -18,8 +21,8 @@
     <body>
 		<form id = "content" action = "" method = "get" >
 			<?php //Вывод списка тем
-				foreach( $themes as $t )
-					echo "<a href = 'lookTheme.php?theme=$t' ><div class = 'ThemeList' >$t</div></a>";					
+				foreach( $keys as $k )
+					echo "<a href = 'lookTheme.php?theme=$k' ><div class = 'ThemeList' >{$theme[ $k ]}</div></a>";					
 			?>
 			<a href = "index.php" ><input type = "button" name = "back" id = "back" value = "Назад" class = "Btn" /></a>
 		</form>
