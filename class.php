@@ -38,12 +38,19 @@
  		
 		//Получаем названия файлов с хуками
 		private function getHooks(){
-			//Хуки для каждого сообщения
-			$hooks = scandir( PATH_TO_HOOKS."onMessage" );
+			//Хуки для каждого сообщения			
 			$this->connect( "onMessage" );
 			//Хуки для каждой итерации
-			$hooks = scandir( PATH_TO_HOOKS."onTimer" );
 			$this->connect( "onTimer" );
+			//Функции ожиданий
+			$hooks = scandir( PATH_TO_HOOKS."onWait" );
+			foreach( $hooks as $h ){
+				if( $h == "." || $h == ".." ) continue;
+				require_once PATH_TO_HOOKS."onWait/".$h;
+				$name = substr( $h, 0, -4 );
+				$class = new $name;
+				$this->hooks[ "onWait" ][ $name ] = $class;
+			}	
 			//Команды
 			$hooks = scandir( PATH_TO_HOOKS."onCommand" );
 			foreach( $hooks as $h ){
@@ -52,15 +59,14 @@
 				$name = substr( $h, 0, -4 );
 				$class = new $name;
 				$this->hooks[ "onCommand" ][ $class->cmd ] = $class;
-			}
-			//Функции ожиданий
-			$hooks = scandir( PATH_TO_HOOKS."onWait" );
-			$this->connect( "onWait" );
+			}			
 		}
 		
 		//Подключение класса
 		private function connect( $str )
 		{
+			$hooks = scandir( PATH_TO_HOOKS.$str );
+			$this->hooks[ $str ] = array();
 			foreach( $hooks as $h ){
 				if( $h == "." || $h == ".." ) continue;
 				require_once PATH_TO_HOOKS."$str/".$h;
@@ -74,26 +80,28 @@
 		public function start(){
 			//while( true ){				
 				foreach( $this->hooks[ "onTimer" ] as $h ) $h->go( $this );
-				$messages = $this->vk->messages_get( 60 )->response;
+				$messages = $this->vk->messages_get( 100000 )->response;
 				//var_dump($messages );
 				$i = 0;
 				while( isset( $messages[ ++$i ] ) ){
 					$this->getMessageInfo( $messages[ $i ] );
-					if( $this->checkBanList( $this->vk->uid ) ) continue;
 					if( $messages[ $i ]->read_state ) continue;
 					$this->output = "";
 					foreach( $this->hooks[ "onMessage" ] as $h ) $h->go( $this );
-					if( $this->checkCommand( $cmd = $messages[ $i ]->body ) )
+					if( $cmd = $this->checkCommand( $this->vk->body ) )
 						$this->hooks[ "onCommand" ][ $cmd ]->go( $this );
-					if( $this->output ) $this->vk->message_send( $this->output );
+					if( $this->output ) 
+						$this->vk->message_send( $this->output );
+					else
+						$this->vk->message_send( "Я тебя не понял... Напиши 'Помощь', чтобы получить список команд" );
 				}		
 				//sleep( $this->interval );
 			//}
 		}
 		
 		//Получаем инфу от сообщения
-		public getMessageInfo( $mess ){
-			$this->vk->uid = $mess->user_id;
+		public function getMessageInfo( $mess ){
+			$this->vk->uid = $mess->uid;
 			$this->vk->mid = $mess->mid;
 			$this->vk->body = $mess->body;
 			if( isset( $mess->chat_id ) ) $this->vk->chat_id = $mess->chat_id;			
@@ -101,21 +109,21 @@
 		
 		//Есть ли такая комманда
 		public function checkCommand( $cmd ){
-			$cmds = array_keys( $this->hooks[ "onCommand" ] );
-			foreach( $cmds as $c )
-				if( $cmd == mb_substr( $c, 0, -4 ) )
+			$keys = array_keys( $this->hooks[ "onCommand" ] );
+			foreach( $keys as $k )
+				if( $cmd == $k )
 					return $cmd;
 			return false;
 		}
 		
 		//Выполнение комманды
 		public function doCommand( $cmd ){
-			$this->hooks[ "onCommand" ][ $cmd ]->go();
+			$this->hooks[ "onCommand" ][ $cmd ]->go( $this );
 		}
 		
 		//Проверка на бан
 		public function checkBanList( $user ){
-			$f = fopen( "settings/banList.txt" );
+			$f = fopen( "settings/banList.txt", 'r' );
 			while( $b = fgets( $f ) )
 				if( $b == $user ) return true;
 			return false;
@@ -123,7 +131,7 @@
 		
 		//Добавим юзера в бан-лист
 		public function addBan( $user ){
-			$f = fopen( "settings/banList.txt" );
+			$f = fopen( "settings/banList.txt", 'w+' );
 			fputs( $user );
 			fclose( $f );
 		}
@@ -131,7 +139,7 @@
 		//Добавим ожидание
 		public function addWaiting( $func, $time ){
 			$insptime = time() + $time;
-			$this->DB->query( "INSERT INTO waitings( uid, func, insptime ) VALUES( {$this->curMessage->uid}, '$func', $insptime )" );
+			$this->DB->query( "INSERT INTO waitings( uid, func, insptime ) VALUES( {$this->vk->uid}, '$func', $insptime )" );
 		}
 		
 		//Получить текущее ожидание пользователя
@@ -165,6 +173,7 @@
 				foreach( $tasks as $t )
 					$this->DB->query( "INSERT INTO tasks( uid, tasks ) VALUES( {$row[ 'id' ]}, $t )" );				
 			}
+		}
 		
 		//Это просто заполнение массивчика случайными моментами времени
 		private function refreshTasks( $row ){			
@@ -191,21 +200,21 @@
 		
 		//Отправить задание пользователю
 		public function sendTask( $uid ){
-			$res = $this->DB->query( "SELECT themes FROM users WHERE uid = $uid" );
+			$res = $this->DB->query( "SELECT themes FROM users WHERE id = $uid" );
 			if( $row = mysqli_fetch_array( $res ) ){
-				$themes = json_decode( $row[0] );
-				foreach( $themes as $t )
-					$this->output = $this->getTaskText( $t );					
+				$themes = explode( ',', $row[0] );
+				$t = rand( 0, count( $themes )-1 );
+				$this->output = $this->getTaskText( $themes[ $t ] );					
 			}
 		}
 		
 		//Получить случайный текст, соответствующий данной теме
-		public getTaskText( $theme ){
-			$res = $this->DB->query( "SELECT text FROM texts WHERE theme = $t ORDER BY RAND() LIMIT 1" );
+		public function getTaskText( $theme ){
+			echo $theme;
+			$res = $this->DB->query( "SELECT text FROM texts WHERE tid = $theme ORDER BY RAND() LIMIT 1" );
 			if( $row = mysqli_fetch_array( $res ) )
 				return $row[ 0 ];
 			return false;			
-		}
-		
+		}		
 	}
 ?>

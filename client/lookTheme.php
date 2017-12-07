@@ -18,13 +18,14 @@
 				while( $row = mysqli_fetch_array( $res ) ){
 					echo "
 						<form class = 'ThemeForm' action = 'editText.php?id={$row['id']}' >
-							<textarea class = 'Textarea'>{$row['text']}</textarea>
+							<textarea class = 'Textarea' name = 'text'>{$row['text']}</textarea>
 							<input type = 'submit' name = 'edit' value = 'Исправить' class = 'EditBtn' />
-						</form>
-					";
+							<input type = 'submit' name = 'delete' value = 'Удалить' class = 'DeleteBtn' />
+						</form>";
 				}
+				if( ! isset( $row ) ) 
+					echo "<p class = 'Infostring' >Ничего нет</p>";
 			?>
-			<a href = "index.php" ><input type = "button" name = "back" id = "back" value = "Меню" class = "Btn" /></a>
 		</form>
     </body>
 </html>

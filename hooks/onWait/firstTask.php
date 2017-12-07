@@ -1,14 +1,14 @@
-<?Php
-	$agreeAnswers = array( 'да','+','ага','ок','окей','хорошо','конечно','угу','хочу', 'д', 'y', 'yes' );
-	$denyAnswers = array( 'нет','неа','не','-','не хочу','нит', 'н', 'n', 'no' );
+<?Php	
 	class firstTask{
 		public function go( $tM ){
+			$agreeAnswers = array( 'да','+','ага','ок','окей','хорошо','конечно','угу','хочу', 'д', 'y', 'yes' );
+			$denyAnswers = array( 'нет','неа','не','-','не хочу','нит', 'н', 'n', 'no' );
 			$text = $tM->vk->body;
 			//ответил "да"
-			foreach( $argeeAnswers as $a )
+			foreach( $agreeAnswers as $a )
 				if( trim( mb_strtolower( $text ) ) == $a ){
 					$output = "Вот твоя первая установка:";
-					$tM->sendTask();					
+					$tM->sendTask( $tM->vk->uid );					
 					return true;					
 				}
 			//ответил "нет"
@@ -17,7 +17,7 @@
 					$output = "Окей, я пришлю тебе установку чуть позже";
 					return true;					
 				}
-			return false;
+			return "Ммм... не понял";
 		}		
 	}
 ?>
