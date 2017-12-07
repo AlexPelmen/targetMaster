@@ -1,0 +1,95 @@
+Body{
+	background: #dd7;
+}
+
+.Text{
+	width: 50%;
+	margin-left: 24%;
+	color: #338;
+	font-size: 40px;
+	text-align: center;
+	
+	border: none;
+	background: #fff;
+	border-radius: 20px;
+	
+	margin-top: 1%;
+	padding-left: 2%;
+	padding-right: 2%;
+}
+
+
+
+#content{
+	margin-top: 10%;
+}
+
+.Btn{
+	width: 50%;
+	margin-left: 24%;
+	margin-top: 2%;
+	background: #a83;
+	
+	color: #862;
+	font-size: 30px;
+	padding: 1%;
+	
+	border: none;
+	border-radius: 20px;
+}
+
+.Btn:hover{
+	background: #bf952d;
+	color: #640;
+}
+
+#output{
+	width: 50%;
+	margin-left: 24%;
+	color: #b66;
+	font-size: 25px;
+	
+	border: none;
+	background: #833;
+	border-radius: 20px;
+	
+	margin-top: 2%;	
+	text-align: center;
+}
+
+.Text:focus{
+	outline: none;
+}
+
+.Btn:focus{
+	outline: none;
+}
+
+#input{
+	width: 50%;
+	margin-left: 24%;
+	color: #338;
+	font-size: 50px;
+	
+	border: none;
+	background: #66a;
+	border-radius: 20px;
+	
+	margin-top: 2%;	
+	text-align: center;
+}
+
+.Marker{
+	background: #833;
+	color: #b66;
+	border-radius: 10px;
+}
+
+.ErrRef{
+	color: #b80;
+	text-decoration: none;
+}
+.ErrRef:hover{
+	color: #a75;
+}
+
