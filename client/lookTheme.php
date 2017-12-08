@@ -2,7 +2,8 @@
 	$theme = $_GET[ 'theme' ];
 	require "../database.php";
 	$DB = link_db();
-	$res = $DB->query( "SELECT id, text FROM texts WHERE theme = $theme" );
+	$DB->query( "SET NAMES utf8" );
+	$res = $DB->query( "SELECT id, text FROM texts WHERE tid = $theme" );
 ?>
 
 <html> 
@@ -13,19 +14,28 @@
  
     <body>
 		<form id = "content" action = "changeToken.php" method = "post" >
-			<a href = "index.php" ><input type = "button" name = "back" id = "back" value = "Меню" class = "Btn" /></a>
+			<a href = "theme.php" ><input type = "button" name = "back" id = "back" value = "Назад" class = "Btn" /></a>
+			<a href = "addText.php?tid=<?php echo $theme; ?>" ><input type = "button" name = "addText" id = "addText" value = "Добавить" class = "Btn" /></a>
+			
+			<p></p>
+			<table class = "OutputTable" >
 			<?php
 				while( $row = mysqli_fetch_array( $res ) ){
 					echo "
-						<form class = 'ThemeForm' action = 'editText.php?id={$row['id']}' >
-							<textarea class = 'Textarea' name = 'text'>{$row['text']}</textarea>
-							<input type = 'submit' name = 'edit' value = 'Исправить' class = 'EditBtn' />
-							<input type = 'submit' name = 'delete' value = 'Удалить' class = 'DeleteBtn' />
-						</form>";
+						<tr>
+							<td class = 'Column1' >
+								<textarea class = 'Textarea' name = 'text' disabled >{$row['text']}</textarea>
+							</td>
+							<td class = 'Column3' >
+								<a href = 'deleteText.php?id={$row['id']}&theme={$theme}' >
+									<div class = 'ListEl DeleteListBtn' >X</div>
+								</a>
+							</td>
+						</tr>
+					";
 				}
-				if( ! isset( $row ) ) 
-					echo "<p class = 'Infostring' >Ничего нет</p>";
 			?>
+			</table>
 		</form>
     </body>
 </html>

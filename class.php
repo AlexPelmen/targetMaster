@@ -88,15 +88,23 @@
 					if( $messages[ $i ]->read_state ) continue;
 					$this->output = "";
 					foreach( $this->hooks[ "onMessage" ] as $h ) $h->go( $this );
-					if( $cmd = $this->checkCommand( $this->vk->body ) )
-						$this->hooks[ "onCommand" ][ $cmd ]->go( $this );
-					if( $this->output ) 
-						$this->vk->message_send( $this->output );
-					else
-						$this->vk->message_send( "Я тебя не понял... Напиши 'Помощь', чтобы получить список команд" );
-				}		
+					if( $foo = $this->checkCommand( mb_strtolower( $this->vk->body ) ) ){
+						$this->resetWaitings();
+						$this->hooks[ "onCommand" ][ $foo ]->go( $this );
+					}
+					if( ! $this->output ) $this->output = "Я тебя не понял... Напиши 'Помощь', чтобы получить список команд";
+				}
+				if( $this->output ) $this->vk->message_send( $this->output );
 				//sleep( $this->interval );
 			//}
+		}
+		
+		//Удаляем ожидания и извещает об этом юзера
+		public function resetWaitings(){
+			if( $row = $this->getWaiting( $this->vk->uid ) ){
+				$this->deleteWaiting( $row[ "id" ] );
+				$this->vk->message_send( "Лан... забей!" );	
+			}				
 		}
 		
 		//Получаем инфу от сообщения
@@ -156,12 +164,12 @@
 		
 		//Перепросчитать время для данного юзера
 		public function refreshUserTasks( $user ){
-			$res = $this->DB->query( "SELECT sTime, eTime, col FROM users WHERE uid = $user" );
-			$row = mysqli_fetch_array( $res );
-			if( $row ){
+			$res = $this->DB->query( "SELECT sTime, eTime, col FROM users WHERE id = $user" );
+			if( $row = mysqli_fetch_array( $res ) ){
 				$tasks = $this->refreshTasks( $row );
+				$this->DB->query( "DELETE FROM tasks WHERE uid = $user" );
 				foreach( $tasks as $t )
-					$this->DB->query( "INSERT INTO tasks( uid, tasks ) VALUES( $user, $t )" );					
+					$this->DB->query( "INSERT INTO tasks( uid, time ) VALUES( $user, $t )" );					
 			}				
 		}
 		
@@ -170,8 +178,9 @@
 			$res = $this->DB->query( "SELECT id, sTime, eTime, col FROM users WHERE enabled = 1" );
 			while( $row = mysqli_fetch_array( $res ) ){
 				$tasks = $this->refreshTasks( $row );
+				$this->DB->query( "DELETE FROM tasks" );
 				foreach( $tasks as $t )
-					$this->DB->query( "INSERT INTO tasks( uid, tasks ) VALUES( {$row[ 'id' ]}, $t )" );				
+					$this->DB->query( "INSERT INTO tasks( uid, time ) VALUES( {$row[ 'id' ]}, $t )" );				
 			}
 		}
 		
@@ -192,9 +201,11 @@
 			$sInt = strtotime( $cur[ "mday" ].' '.$cur[ "month" ].' '.$cur[ "year" ].' '.$sh." hours ".$sm." minutes" );
 			$eInt = strtotime( $cur[ "mday" ].' '.$cur[ "month" ].' '.$cur[ "year" ].' '.$eh." hours ".$em." minutes" );
 			
-			for( $i = 0; $i < $col; $i++ )
-				array_push( $tasks, rand( $sInt, $eInt ) );
-			
+			for( $i = 0; $i < $col; $i++ ){
+				$task = rand( $sInt, $eInt );
+				if( $task > time() )
+					array_push( $tasks, $task );
+			}			
 			return $tasks;				
 		}
 		
@@ -203,14 +214,17 @@
 			$res = $this->DB->query( "SELECT themes FROM users WHERE id = $uid" );
 			if( $row = mysqli_fetch_array( $res ) ){
 				$themes = explode( ',', $row[0] );
-				$t = rand( 0, count( $themes )-1 );
-				$this->output = $this->getTaskText( $themes[ $t ] );					
+				$t = rand( 0, count( $themes )- 1);
+				$this->output = $this->getTaskText( $themes[ $t ] );
+				if( ! $this->output )
+					$this->output = "Я хз что тебе прислать...";
 			}
+			else
+				$this->output = "У тебя не подключены темы";
 		}
 		
 		//Получить случайный текст, соответствующий данной теме
 		public function getTaskText( $theme ){
-			echo $theme;
 			$res = $this->DB->query( "SELECT text FROM texts WHERE tid = $theme ORDER BY RAND() LIMIT 1" );
 			if( $row = mysqli_fetch_array( $res ) )
 				return $row[ 0 ];

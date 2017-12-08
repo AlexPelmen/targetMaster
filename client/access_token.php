@@ -10,9 +10,10 @@
  
     <body>
 		<form id = "content" action = "changeToken.php" method = "post" >
-			<p class = "Infostring" >Текущий access_token: <? $token ?></p>
-			<p>Ввести новый:</p>
+			<p class = "Infostring" >Текущий access_token: <b><?php echo $token ?></b></p>
+			<p class = "Infostring" >Ввести новый:</p>
 			<input type = "Text" name = "token" class = "Text" />
+			<input type = "submit" name = "ok" value = "Изменить" class = "Btn" />
 			<a href = "index.php" ><input type = "button" name = "back" id = "back" value = "Назад" class = "Btn" /></a>
 		</form>
     </body>

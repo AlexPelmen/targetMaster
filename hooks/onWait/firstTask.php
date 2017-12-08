@@ -7,17 +7,18 @@
 			//ответил "да"
 			foreach( $agreeAnswers as $a )
 				if( trim( mb_strtolower( $text ) ) == $a ){
-					$output = "Вот твоя первая установка:";
+					$tM->output = "Вот твоя первая установка:";
 					$tM->sendTask( $tM->vk->uid );					
 					return true;					
 				}
 			//ответил "нет"
 			foreach( $denyAnswers as $a )
 				if( trim( mb_strtolower( $text ) ) == $a ){
-					$output = "Окей, я пришлю тебе установку чуть позже";
+					$tM->output = "Окей, я пришлю тебе установку чуть позже";
 					return true;					
 				}
-			return "Ммм... не понял";
+			$tM->output = "ммм... не понял. Напиши да/нет";
+			return false;
 		}		
 	}
 ?>

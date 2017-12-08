@@ -1,8 +1,3 @@
-<?php 
-	
-	
-?>
-
 <html> 
     <head>
         <link rel="stylesheet" type="text/css" href="style.css" > 
@@ -11,10 +6,9 @@
  
     <body>
 		<form id = "content" action = "" method = "get" >
-			<input type = "button" name = "info" id = "info" value = "Инфа" class = "Btn" />
-			<input type = "button" name = "themes" id = "themes" value = "Темы" class = "Btn" />
-			<input type = "button" name = "bans" id = "bans" value = "Баны" class = "Btn" />
-			<input type = "button" name = "access_token" id = "access_token" value = "access_token" class = "Btn" />
+			<a href = "info.php" ><input type = "button" name = "info" id = "info" value = "Инфа" class = "Btn" /></a>
+			<a href = "theme.php" ><input type = "button" name = "themes" id = "themes" value = "Темы" class = "Btn" /></a>
+			<a href = "access_token.php" ><input type = "button" name = "access_token" id = "access_token" value = "access_token" class = "Btn" /></a>
 		</form>
     </body>
 </html>

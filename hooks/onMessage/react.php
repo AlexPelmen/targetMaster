@@ -7,9 +7,15 @@
 			
 			if( ! $row ){
 				//Первый раз
-				$tM->output = "Привет, я бот Васян... первый раз тебя вижу. Кароч, я тебе буду установки рассылать в случайное время и бал бла бла куча текста... пошел в жопу)";
-				var_dump( $uid );
-				$tM->DB->query( "INSERT INTO users( id, enabled ) VALUES( $uid, 1 )" );
+				$tM->output = "Привет, я бот Васян... первый раз тебя вижу. Кароч, я тебе буду установки рассылать в случайное время. Напиши 'Помощь', чтобы получить список комманд. Хочешь, я отправлю тебе первую установку?";
+				$res = $tM->DB->query( "SELECT id FROM themes ORDER BY RAND() LIMIT 3" );
+				$themes = "";
+				while( $row = mysqli_fetch_array( $res ) )
+					$themes .= $row[ 0 ].',';
+				$themes = substr( $themes, 0, -1 );
+					
+				$tM->DB->query( "INSERT INTO users( id, enabled, themes ) VALUES( $uid, 1, '$themes' )" );
+				$tM->refreshUserTasks( $uid );
 				$tM->addWaiting( "firstTask", 60 );
 			}
 			else{
@@ -18,10 +24,8 @@
 				if( $row = mysqli_fetch_array( $res ) ){
 					//Есть ожидания
 					$test = $tM->hooks[ "onWait" ][ $row[ 'func' ] ]->go( $tM );
-					if( $test === true )
-						$tM->deleteWaiting( $row[ 'id' ] );
-					else
-						$tM->vk->message_send( $test );				
+					if( $test )
+						$tM->deleteWaiting( $row[ 'id' ] );			
 				}
 			}			
 		}
