@@ -16,7 +16,7 @@
 				if( is_numeric( $s ) )
 					array_push( $themes, $s );
 			if( ! $themes ){
-				$tM->output = "Просто перечисли НОМЕРА тем!";
+				$tM->output = $tM->replics[ "writeThemeNumbers" ];
 				return false;
 			}
 						
@@ -34,17 +34,14 @@
 			}
 			
 			if( ! $todb ){
-				$tM->output .= "Попробуй ввести еще раз";
+				$tM->output .= $tM->replics[ "tryAgain" ];
 				return false;
 			}
 			
 			$out = substr( $out, 0, -2 );
 			$todb = substr( $todb, 0, -1 );
 			
-			$tM->output .= "
-			
-			Я добавил темы:
-			".$out;			
+			$tM->output .= $tM->replics[ "themesAdded" ].$out;			
 			
 			$tM->DB->query( "UPDATE `users` SET `themes` = '$todb'" );			
 			return true;

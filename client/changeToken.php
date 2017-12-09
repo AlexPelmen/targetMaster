@@ -1,5 +1,7 @@
 <?php 
-
+	session_start(); if( ! isset( $_SESSION[ 'valid' ] ) )  exit(); 
+	if( $_SESSION[ 'valid' ] != "RelaxMyFriend"  ) exit();
+	
 	//Запись токена в файлик
 	$token = $_POST[ "token" ];
 	if( trim( $token ) == "" ){ 

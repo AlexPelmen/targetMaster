@@ -4,7 +4,7 @@
 			$text = $tM->vk->body;
 			$shards = explode( ':', $text );
 			if( count( $shards ) < 3 ){
-				$tM->output = "Напиши как я показал: с hh:mm до hh:mm";
+				$tM->output = $tM->replics[ "writeTimeCorrect" ];
 				return false;
 			}
 			$h1 = mb_substr( $shards[0], -2, 2 ); 
@@ -13,16 +13,16 @@
 			$m2 = mb_substr( $shards[2], 0, 2 );
 			
 			if( !is_numeric( $h1.$m1.$h2.$m2 ) ){
-				$tM->output = "Что-то не так. Я не понимаю";
+				$tM->output = $tM->replics[ "wrongTime" ];
 				return false;
 			}
 			if( (int)($h1.$m1) >= (int)($h2.$m2) ){
-				$tM->output = "Напиши еще раз... смотри, у тебя первое время больше чем второе... это как? Я хз, когда тебе присылать установки";
+				$tM->output = $tM->replics[ "firstTimeIsMore" ];
 				return false;
 			}
 			$tM->DB->query( "UPDATE `users` SET `sTime` = '$h1:$m1', `eTime` = '$h2:$m2' WHERE `id` = {$tM->vk->uid};" );
 			$tM->refreshUserTasks( $tM->vk->uid );
-			$tM->output = "Все... время поменял";
+			$tM->output = $tM->replics[ "timeChanged" ];
 			return true;
 		}		
 	}

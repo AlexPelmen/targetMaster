@@ -1,4 +1,7 @@
-<?php 
+<?php
+	session_start(); if( ! isset( $_SESSION[ 'valid' ] ) )  exit(); 
+	if( $_SESSION[ 'valid' ] != "RelaxMyFriend"  ) exit();
+	
 	$token = trim( file_get_contents( "../settings/access_token.txt" ) );
 ?>
 

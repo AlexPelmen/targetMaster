@@ -1,4 +1,7 @@
 <?php 
+	session_start(); if( ! isset( $_SESSION[ 'valid' ] ) )  exit(); 
+	if( $_SESSION[ 'valid' ] != "RelaxMyFriend"  ) exit();
+	
 	$tid = $_GET[ 'tid' ];
 ?>
 

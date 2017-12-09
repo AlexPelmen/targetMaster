@@ -3,7 +3,7 @@
 		public
 			$cmd = "спасибо";
 		public function go( $tM ){
-			$tM->output = "Пожалуйста";
+			$tM->output = $tM->replics[ "Thanks" ];
 		}		
 	}
 ?>

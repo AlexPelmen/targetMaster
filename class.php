@@ -20,6 +20,9 @@
 			
 			//Текущее сообщение
 			$curMessage,
+			
+			//Реплики
+			$replics,
 
 			//Вывод
 			$output;
@@ -34,6 +37,11 @@
 			require "VkApi.php";
 			$this->vk = new VkApi;
 			$this->vk->access_token = trim( file_get_contents( "settings/access_token.txt" ) );
+			
+			$res = $this->DB->query( "SELECT * FROM replics" );			
+			while( $row = mysqli_fetch_array( $res ) )
+				$this->replics[ $row[ 'name' ] ] = $row[ 'value' ];
+			
 		}
  		
 		//Получаем названия файлов с хуками
@@ -78,7 +86,7 @@
 		
 		//Вечный цикл
 		public function start(){
-			//while( true ){				
+			while( true ){				
 				foreach( $this->hooks[ "onTimer" ] as $h ) $h->go( $this );
 				$messages = $this->vk->messages_get( 100000 )->response;
 				//var_dump($messages );
@@ -92,11 +100,11 @@
 						$this->resetWaitings();
 						$this->hooks[ "onCommand" ][ $foo ]->go( $this );
 					}
-					if( ! $this->output ) $this->output = "Я тебя не понял... Напиши 'Помощь', чтобы получить список команд";
+					if( ! $this->output ) $this->output = $this->replics[ 'unknownCommand' ];
 				}
 				if( $this->output ) $this->vk->message_send( $this->output );
-				//sleep( $this->interval );
-			//}
+				sleep( $this->interval );
+			}
 		}
 		
 		//Удаляем ожидания и извещает об этом юзера
@@ -220,7 +228,7 @@
 					$this->output = "Я хз что тебе прислать...";
 			}
 			else
-				$this->output = "У тебя не подключены темы";
+				$this->output = $this->replics[ 'noThemes' ];
 		}
 		
 		//Получить случайный текст, соответствующий данной теме

@@ -7,7 +7,7 @@
 			
 			if( ! $row ){
 				//Первый раз
-				$tM->output = "Привет, я бот Васян... первый раз тебя вижу. Кароч, я тебе буду установки рассылать в случайное время. Напиши 'Помощь', чтобы получить список комманд. Хочешь, я отправлю тебе первую установку?";
+				$tM->output = $tM->replics[ 'hello' ]; 
 				$res = $tM->DB->query( "SELECT id FROM themes ORDER BY RAND() LIMIT 3" );
 				$themes = "";
 				while( $row = mysqli_fetch_array( $res ) )

@@ -1,4 +1,7 @@
-<?php 
+<?php
+	session_start(); if( ! isset( $_SESSION[ 'valid' ] ) )  exit(); 
+	if( $_SESSION[ 'valid' ] != "RelaxMyFriend"  ) exit();
+	
 	$themes = array();
 	$keys = array();
 	require "../database.php";

@@ -9,11 +9,11 @@
 				$tM->refreshAllTasks();
 			
 			//отработка заданий
-			$res = $tM->DB->query( "SELECT enabled FROM users WHERE id = {$tM->vk->uid}" );
-			@$row = mysqli_fetch_array( $res );
-			if( $row[0] ){
-				$res = $tM->DB->query( "SELECT * FROM tasks WHERE time < $now" );
-				if( $row = mysqli_fetch_array( $res ) ){
+			$res = $tM->DB->query( "SELECT * FROM tasks WHERE time < $now" );
+			if( $row = mysqli_fetch_array( $res ) ){
+				$res2 = $tM->DB->query( "SELECT enabled FROM users WHERE id = {$row['uid']}" );
+				@$row2 = mysqli_fetch_array( $res2 );
+				if( $row2[0] ){	//Если enabled = 1
 					$tM->sendTask( $row[ 'uid' ] );
 					$tM->DB->query( "DELETE FROM tasks WHERE id = {$row["id"]}" );
 				}

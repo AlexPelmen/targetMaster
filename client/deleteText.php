@@ -1,4 +1,7 @@
 <?php 
+	session_start(); if( ! isset( $_SESSION[ 'valid' ] ) )  exit(); 
+	if( $_SESSION[ 'valid' ] != "RelaxMyFriend"  ) exit();
+	
 	$id = $_GET[ 'id' ];
 	$tid = $_GET[ 'theme' ];
 	require "../database.php";
