@@ -2,8 +2,8 @@
 	session_start();
 	if( $_POST[ "pswd" ] = "fesH21Jd2K" ){
 		$_SESSION[ "valid" ] = "RelaxMyFriend";
-		header('Location: http://localhost/targetMaster/client/index.php');
+		header('Location: botof.net/targetMaster/client/index.php');
 	}
 	else
-		header('Location: http://localhost/targetMaster/client/auth.php');
+		header('Location: botof.net/targetMaster/client/auth.php');
 ?>

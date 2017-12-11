@@ -7,7 +7,7 @@
 				return false;
 			}
 			$tM->DB->query( "UPDATE `users` SET `col` = $text WHERE `id` = {$tM->vk->uid};" );
-			$this->refreshUserTasks( $tM->vk->uid );
+			$tM->refreshUserTasks( $tM->vk->uid );
 			$tM->output = $tM->replics[ "colChanged" ];
 			return true;
 		}		

@@ -1,7 +1,7 @@
 <?Php
 	class Thanks{
 		public
-			$cmd = "спасибо";
+			$cmd = array( "спасиб" );
 		public function go( $tM ){
 			$tM->output = $tM->replics[ "Thanks" ];
 		}		

@@ -1,5 +1,5 @@
 <?php
-	define( "PATH_TO_HOOKS", "hooks/" );
+	define( "PATH_TO_HOOKS", __DIR__ . "/hooks/" );
 	class targetMaster{
 		public
 			//Задержка таймера
@@ -30,13 +30,13 @@
 		
 		function __construct(){
 			$this->getHooks();
-			require "database.php";
+			require __DIR__ . "/database.php";
 			$this->DB = link_db();
 			$this->DB->query( "SET NAMES utf8" );
 			
-			require "VkApi.php";
+			require __DIR__ . "/VkApi.php";
 			$this->vk = new VkApi;
-			$this->vk->access_token = trim( file_get_contents( "settings/access_token.txt" ) );
+			$this->vk->access_token = trim( file_get_contents( __DIR__ . "/settings/access_token.txt" ) );
 			
 			$res = $this->DB->query( "SELECT * FROM replics" );			
 			while( $row = mysqli_fetch_array( $res ) )
@@ -60,14 +60,7 @@
 				$this->hooks[ "onWait" ][ $name ] = $class;
 			}	
 			//Команды
-			$hooks = scandir( PATH_TO_HOOKS."onCommand" );
-			foreach( $hooks as $h ){
-				if( $h == "." || $h == ".." ) continue;
-				require_once PATH_TO_HOOKS."onCommand/".$h;
-				$name = substr( $h, 0, -4 );
-				$class = new $name;
-				$this->hooks[ "onCommand" ][ $class->cmd ] = $class;
-			}			
+			$this->connect( "onCommand" );		
 		}
 		
 		//Подключение класса
@@ -87,23 +80,24 @@
 		//Вечный цикл
 		public function start(){
 			while( true ){				
-				foreach( $this->hooks[ "onTimer" ] as $h ) $h->go( $this );
-				$messages = $this->vk->messages_get( 100000 )->response;
+				$messages = $this->vk->messages_get( 300 )->response;
 				//var_dump($messages );
 				$i = 0;
 				while( isset( $messages[ ++$i ] ) ){
 					$this->getMessageInfo( $messages[ $i ] );
 					if( $messages[ $i ]->read_state ) continue;
 					$this->output = "";
+					
+					//Выполняем все хуки для сообщения
 					foreach( $this->hooks[ "onMessage" ] as $h ) $h->go( $this );
-					if( $foo = $this->checkCommand( mb_strtolower( $this->vk->body ) ) ){
-						$this->resetWaitings();
-						$this->hooks[ "onCommand" ][ $foo ]->go( $this );
-					}
+					//Команда ли?
+					$this->checkCommand( mb_strtolower( $this->vk->body ) );
+										
 					if( ! $this->output ) $this->output = $this->replics[ 'unknownCommand' ];
-				}
-				if( $this->output ) $this->vk->message_send( $this->output );
+					if( $this->output ) $this->vk->message_send( $this->output );
+				}				
 				sleep( $this->interval );
+				foreach( $this->hooks[ "onTimer" ] as $h ) $h->go( $this );
 			}
 		}
 		
@@ -124,22 +118,22 @@
 		}
 		
 		//Есть ли такая комманда
-		public function checkCommand( $cmd ){
-			$keys = array_keys( $this->hooks[ "onCommand" ] );
-			foreach( $keys as $k )
-				if( $cmd == $k )
-					return $cmd;
+		public function checkCommand( $text ){
+			$cmdfoos = $this->hooks[ "onCommand" ];
+			foreach( $cmdfoos as $f ){
+				foreach( $f->cmd as $cmd )
+					if( strpos( $text, $cmd ) !== false ){
+						$this->resetWaitings();
+						$f->go( $this );
+						return true;
+					}
+			}
 			return false;
-		}
-		
-		//Выполнение комманды
-		public function doCommand( $cmd ){
-			$this->hooks[ "onCommand" ][ $cmd ]->go( $this );
 		}
 		
 		//Проверка на бан
 		public function checkBanList( $user ){
-			$f = fopen( "settings/banList.txt", 'r' );
+			$f = fopen( __DIR__ . "/settings/banList.txt", 'r' );
 			while( $b = fgets( $f ) )
 				if( $b == $user ) return true;
 			return false;
@@ -147,7 +141,7 @@
 		
 		//Добавим юзера в бан-лист
 		public function addBan( $user ){
-			$f = fopen( "settings/banList.txt", 'w+' );
+			$f = fopen( __DIR__ . "/settings/banList.txt", 'w+' );
 			fputs( $user );
 			fclose( $f );
 		}
@@ -184,16 +178,18 @@
 		//Обновляем время установок для каждого юзера
 		public function refreshAllTasks(){
 			$res = $this->DB->query( "SELECT id, sTime, eTime, col FROM users WHERE enabled = 1" );
+			$this->DB->query( "DELETE FROM tasks" );
 			while( $row = mysqli_fetch_array( $res ) ){
 				$tasks = $this->refreshTasks( $row );
-				$this->DB->query( "DELETE FROM tasks" );
 				foreach( $tasks as $t )
 					$this->DB->query( "INSERT INTO tasks( uid, time ) VALUES( {$row[ 'id' ]}, $t )" );				
 			}
 		}
 		
 		//Это просто заполнение массивчика случайными моментами времени
-		private function refreshTasks( $row ){			
+		private function refreshTasks( $row ){
+			if( $row[ 'col' ] < 1 ) return false;
+			if( trim( $row[ 'themes' ] ) == "" ) return false;
 			$tasks = array();
 			$cur = getdate();
 			
@@ -201,14 +197,16 @@
 			$e = $row[ 'eTime' ];
 			$col = $row[ 'col' ];
 			
-			$sh = substr( $s, 0, 2 );
-			$sm = substr( $s, 3, 2 );
-			$eh = substr( $e, 0, 2 );
-			$em = substr( $e, 3, 2 );
+			$exp = explode( ':', $s );
+			$sh = $exp[0];
+			$sm = $exp[1];
+			$exp = explode( ':', $e );
+			$eh = $exp[0];
+			$em = $exp[1];
 			
 			$sInt = strtotime( $cur[ "mday" ].' '.$cur[ "month" ].' '.$cur[ "year" ].' '.$sh." hours ".$sm." minutes" );
 			$eInt = strtotime( $cur[ "mday" ].' '.$cur[ "month" ].' '.$cur[ "year" ].' '.$eh." hours ".$em." minutes" );
-			
+						
 			for( $i = 0; $i < $col; $i++ ){
 				$task = rand( $sInt, $eInt );
 				if( $task > time() )
@@ -237,6 +235,26 @@
 			if( $row = mysqli_fetch_array( $res ) )
 				return $row[ 0 ];
 			return false;			
+		}
+
+		//Получаем текст настроек
+		public function getUserSettings( $user ){
+			$out = $this->replics[ "curSettings" ]."\n";
+			$res = $this->DB->query( "SELECT * FROM users WHERE id = $user" );
+			if( $row = mysqli_fetch_array( $res ) ){
+				$out .= $this->replics[ "settingsCol" ].' '.$row[ 'col' ]."\n";
+				$time = 'С '.$row[ 'sTime' ].' до '.$row[ 'eTime' ];
+				$out .= $this->replics[ "settingsTime" ].' '.$time."\n";
+				$out .= $this->replics[ "settingsThemes" ]."\n";
+				
+				$exp = explode( ',', $row[ "themes" ] );
+				foreach( $exp as $e ){
+					$res = $this->DB->query( "SELECT theme from themes WHERE id = $e" );
+					if( $row2 = mysqli_fetch_array( $res ) )
+						$out .= $row2[0]."\n";
+				}
+				return $out;
+			}
 		}		
 	}
 ?>

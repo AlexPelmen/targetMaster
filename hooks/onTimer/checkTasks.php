@@ -15,8 +15,10 @@
 				@$row2 = mysqli_fetch_array( $res2 );
 				if( $row2[0] ){	//Если enabled = 1
 					$tM->sendTask( $row[ 'uid' ] );
-					$tM->DB->query( "DELETE FROM tasks WHERE id = {$row["id"]}" );
+					$tM->vk->uid = $row[ 'uid' ];
+					$tM->vk->message_send( $tM->output );
 				}
+				$tM->DB->query( "DELETE FROM tasks WHERE id = {$row["id"]}" );
 			}
 		}		
 	}

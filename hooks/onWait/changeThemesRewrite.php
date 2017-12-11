@@ -1,16 +1,15 @@
 <?Php	
+	//explode сразу с несколькими делиметрами
+	function multiexplode ($delimiters,$string) {    
+		$ready = str_replace($delimiters, $delimiters[0], $string);
+		$launch = explode($delimiters[0], $ready);
+		return  $launch;
+	}
+			
 	class changeThemesRewrite{
 		public function go( $tM ){
-			
-			//explode сразу с несколькими делиметрами
-			function multiexplode ($delimiters,$string) {    
-				$ready = str_replace($delimiters, $delimiters[0], $string);
-				$launch = explode($delimiters[0], $ready);
-				return  $launch;
-			}
-
 			$text = $tM->vk->body;
-			$shards = multiexplode( array( ',', '.', ' ', ';', ':', '/' ), $text );
+			$shards = multiexplode( array( ',', '.', ' ', ';', ':', '/', ')' ), $text );
 			$themes = array();
 			foreach( $shards as $s )
 				if( is_numeric( $s ) )
@@ -19,19 +18,26 @@
 				$tM->output = $tM->replics[ "writeThemeNumbers" ];
 				return false;
 			}
-						
+				
+			//Формирование строк вывода юзеру и записи в бд
 			$out = "";
 			$todb = "";
-			foreach( $themes as $t ){
-				$res = $tM->DB->query( "SELECT theme FROM themes WHERE id = $t" );
-				if( $row = mysqli_fetch_array( $res ) ){
+			$i = 0;
+			$res = $tM->DB->query( "SELECT id, theme FROM themes" );
+			while( $row = mysqli_fetch_array( $res ) ){
+				$key = array_search( ++$i, $themes );
+				if( $key !== false ){
 					$out .= $row[ 'theme' ].', ';
-					$todb .= $t.',';
+					$todb .= $row[ 'id' ].',';
+					unset( $themes[ $key ] );
 				}
-				else
-					$tM->output .= "Темы №".$t." нет
-				";
 			}
+						
+			//Вывод сообщения об ошибке
+			if( $themes )
+				foreach( $themes as $t )
+					$tM->output .= "Темы №".$t." нет
+						";					
 			
 			if( ! $todb ){
 				$tM->output .= $tM->replics[ "tryAgain" ];
@@ -41,9 +47,9 @@
 			$out = substr( $out, 0, -2 );
 			$todb = substr( $todb, 0, -1 );
 			
-			$tM->output .= $tM->replics[ "themesAdded" ].$out;			
+			$tM->DB->query( "UPDATE `users` SET `themes` = '$todb' WHERE id = {$tM->vk->uid}" );
 			
-			$tM->DB->query( "UPDATE `users` SET `themes` = '$todb'" );			
+			$tM->output .= $tM->replics[ "themesAdded" ].' '.$out;					
 			return true;
 		}		
 	}

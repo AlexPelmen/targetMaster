@@ -1,7 +1,7 @@
 <?Php
 	class help{
 		public
-			$cmd = "помощь";
+			$cmd = array( "помощ", "помог" );
 		public function go( $tM ){
 			$tM->output = $tM->replics[ "help" ];
 		}		

@@ -5,9 +5,8 @@
 			$res = $tM->DB->query( "SELECT * FROM users WHERE id = $uid" );
 			$row = mysqli_fetch_array( $res );
 			
-			if( ! $row ){
-				//Первый раз
-				$tM->output = $tM->replics[ 'hello' ]; 
+			//Первый раз
+			if( ! $row ){				
 				$res = $tM->DB->query( "SELECT id FROM themes ORDER BY RAND() LIMIT 3" );
 				$themes = "";
 				while( $row = mysqli_fetch_array( $res ) )
@@ -15,6 +14,11 @@
 				$themes = substr( $themes, 0, -1 );
 					
 				$tM->DB->query( "INSERT INTO users( id, enabled, themes ) VALUES( $uid, 1, '$themes' )" );
+				//Вывод
+				$tM->output = $tM->replics[ 'hello' ]."\n";
+				$tM->output .= $tM->getUserSettings( $uid )."\n";
+				$tM->output .= $tM->replics[ 'firstTask' ];
+				
 				$tM->refreshUserTasks( $uid );
 				$tM->addWaiting( "firstTask", 60 );
 			}
